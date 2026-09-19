@@ -1,0 +1,9 @@
+services:
+  dev:
+    build: .
+    image: packetclassifier:latest
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    tty: true
+    stdin_open: true

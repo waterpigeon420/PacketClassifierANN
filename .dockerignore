@@ -1,0 +1,6 @@
+.git
+data/
+network-packet-classification/docs/
+network-packet-classification/build/
+**/*.png
+**/*.jpg
