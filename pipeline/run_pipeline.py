@@ -9,13 +9,10 @@ Examples:
     python run_pipeline.py --rules acl1_1000.txt --trace acl1_1000.txt_trace
     python run_pipeline.py --rules acl1_1000.txt --trace acl1_1000.txt_trace \\
         --engine python --limit 500 --out results.csv
-    python run_pipeline.py --rules acl1_1000.txt --trace acl1_1000.txt_trace \\
-        --compare
 """
 
 import argparse
 import csv
-import sys
 import time
 
 from classbench_io import parse_ruleset, parse_trace
@@ -61,11 +58,6 @@ def main():
     ap.add_argument("--engine", choices=ENGINES, default="numpy")
     ap.add_argument("--limit", type=int, default=None, help="only classify the first N packets")
     ap.add_argument("--out", help="write per-packet results to this CSV path")
-    ap.add_argument(
-        "--compare",
-        action="store_true",
-        help="run both engines and report whether their outputs match",
-    )
     args = ap.parse_args()
 
     print(f"Loading ruleset: {args.rules}")
@@ -76,32 +68,8 @@ def main():
         packets = packets[: args.limit]
     print(f"{len(rules)} rules, {len(packets)} packets\n")
 
-    if args.compare:
-        results_by_engine = {}
-        for name in ENGINES:
-            results, elapsed = run(name, rules, packets)
-            results_by_engine[name] = results
-            summarize(results, packets, elapsed, name)
-            print()
-        names = list(results_by_engine)
-        baseline = results_by_engine[names[0]]
-        for name in names[1:]:
-            mismatches = [
-                i
-                for i, (a, b) in enumerate(zip(baseline, results_by_engine[name]))
-                if a != b
-            ]
-            if mismatches:
-                print(
-                    f"MISMATCH: {names[0]} vs {name} disagree on "
-                    f"{len(mismatches)} packets, e.g. indices {mismatches[:10]}"
-                )
-                sys.exit(1)
-        print(f"OK: all engines ({', '.join(names)}) agree.")
-        results = baseline
-    else:
-        results, elapsed = run(args.engine, rules, packets)
-        summarize(results, packets, elapsed, args.engine)
+    results, elapsed = run(args.engine, rules, packets)
+    summarize(results, packets, elapsed, args.engine)
 
     if args.out:
         with open(args.out, "w", newline="") as f:

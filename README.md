@@ -111,12 +111,35 @@ reference loop); anything else is forwarded to `pipeline/run_pipeline.py`:
 
 ```bash
 make classify-py NAME=acl1_1000 ENGINE=python
-docker compose run --rm dev scripts/classify_py.sh acl1_1000 --compare       # cross-check both engines agree
 docker compose run --rm dev scripts/classify_py.sh acl1_1000 --limit 500     # quick smoke test
 docker compose run --rm dev scripts/classify_py.sh acl1_1000 --out res.csv   # dump per-packet results
 ```
 
 See `pipeline/README.md` for the pipeline's internals.
+
+### 4. Compare C++ vs Python results
+
+```bash
+make compare NAME=acl1_1000
+```
+
+Runs the C++ classifier and the Python pipeline against the same
+ruleset/trace, each writing a `packet_index,matched_priority` CSV
+(`data/<name>/cpp_results.csv`, `data/<name>/py_results.csv`), then diffs
+them with `pipeline/compare_results.py` and reports any packets where the
+two disagree.
+
+Equivalent without `make`:
+
+```bash
+docker compose run --rm dev scripts/classify_cpp.sh acl1_1000 linear -o data/acl1_1000/cpp_results.csv
+docker compose run --rm dev scripts/classify_py.sh acl1_1000 numpy --out data/acl1_1000/py_results.csv
+docker compose run --rm dev python3 pipeline/compare_results.py data/acl1_1000/cpp_results.csv data/acl1_1000/py_results.csv
+```
+
+Note: this will currently report mismatches because of the `isMatch()` bug
+described in Known issues below -- that's the tool doing its job, not a
+bug in the comparison itself.
 
 ### One-shot
 
@@ -217,19 +240,25 @@ agrees with generating rule (informational, overlaps make <100% expected): 8891/
 elapsed: 0.0842s  (111,758 packets/sec)
 ```
 
-**5. Sanity-check both Python engines agree with each other:**
+**5. Compare the C++ and Python results:**
 
 ```bash
-docker compose run --rm dev scripts/classify_py.sh acl1_1000 --compare
+make compare NAME=acl1_1000
 ```
 
 ```
 ...
---- numpy ---
+Wrote per-packet results to data/acl1_1000/cpp_results.csv
 ...
-
-OK: all engines (python, numpy) agree.
+Wrote per-packet results to data/acl1_1000/py_results.csv
+MISMATCH: cpp vs python disagree on 8749/9250 packets, e.g. indices [0, 1, 3, 4, 5, 6, 7, 8, 9, 10]
+  packet 0: cpp=8 python=108
+  ...
 ```
+
+That mismatch is expected right now -- it's the `isMatch()` bug below, not
+a problem with the comparison tool. Once that's fixed, this should print
+`OK: cpp and python agree on all <n> packets.`
 
 ## Known issues
 
@@ -340,15 +369,13 @@ OK: all engines (python, numpy) agree.
    }
    ```
 
-3. Run it, and check it agrees with the existing engines before trusting it:
+3. Run it, and check its output before trusting it -- e.g. diff its `--out`
+   CSV against the `numpy` engine's, or against the C++ classifier's (see
+   "Compare C++ vs Python results" above):
 
    ```bash
    make classify-py NAME=acl1_1000 ENGINE=my_classifier
-   docker compose run --rm dev scripts/classify_py.sh acl1_1000 --compare   # add my_classifier to ENGINES first
    ```
-
-   (`--compare` currently loops over every entry in `ENGINES`, so once
-   yours is registered it's included automatically.)
 
 ## Notes
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Classify a generated dataset with the Python pipeline (fast iteration,
 # no C++ rebuild). Thin wrapper around pipeline/run_pipeline.py using the
-# data/<name>/ convention -- for other options (--limit, --out, --compare)
-# call pipeline/run_pipeline.py directly.
+# data/<name>/ convention -- for other options (--limit, --out) call
+# pipeline/run_pipeline.py directly.
 #
-# Usage: classify_py.sh <name> [engine] [extra run_pipeline.py args, e.g. --compare --limit 500]
+# Usage: classify_py.sh <name> [engine] [extra run_pipeline.py args, e.g. --limit 500]
 #
 #   name    subfolder under data/ to classify (as produced by generate.sh).
 #   engine  python (plain-loop reference) or numpy (vectorized, default).

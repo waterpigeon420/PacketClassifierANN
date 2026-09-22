@@ -13,7 +13,6 @@ this is the normal path:
 ```
 docker compose run --rm dev scripts/classify_py.sh <name>
 docker compose run --rm dev scripts/classify_py.sh <name> python   # plain-loop engine
-docker compose run --rm dev scripts/classify_py.sh <name> --compare
 docker compose run --rm dev scripts/classify_py.sh <name> --limit 1000
 docker compose run --rm dev scripts/classify_py.sh <name> --out results.csv
 ```
@@ -27,12 +26,10 @@ python run_pipeline.py --rules <ruleset_file> --trace <trace_file>
 python run_pipeline.py --rules <ruleset_file> --trace <trace_file> --engine python
 python run_pipeline.py --rules <ruleset_file> --trace <trace_file> --limit 1000
 python run_pipeline.py --rules <ruleset_file> --trace <trace_file> --out results.csv
-python run_pipeline.py --rules <ruleset_file> --trace <trace_file> --compare
 ```
 
-`--compare` runs both engines and fails loudly if they disagree -- use it
-whenever you change `classify.py` to make sure the fast path still matches
-the reference path.
+To check the Python pipeline's results against the C++ classifier's, see
+"Compare C++ vs Python results" in the repo root README.
 
 ## Files
 
@@ -42,6 +39,8 @@ the reference path.
   and `linear_search_numpy` (vectorized, ~2-3x faster on rule sets up to a
   few thousand rules).
 - `run_pipeline.py` -- CLI wrapping the above.
+- `compare_results.py` -- diffs a `--out` CSV from this pipeline against a
+  `-o` CSV from the C++ classifier (see repo root README).
 
 ## Notes
 
