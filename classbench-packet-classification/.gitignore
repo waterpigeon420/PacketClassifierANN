@@ -1,0 +1,13 @@
+# Downloaded/compiled by `make` in classbench-ng/vendor (see classbench-ng/README)
+classbench-ng/vendor/db_generator/
+classbench-ng/vendor/parameter_files/
+
+# Build artifacts
+*.o
+trace_generator/trace_generator
+trace_generator/gmon.out
+
+# Generated rulesets/traces (produced by classbench-ng / trace_generator at runtime)
+classbench-ng/*.txt
+trace_generator/*.txt
+trace_generator/*.txt_trace

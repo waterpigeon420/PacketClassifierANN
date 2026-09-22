@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build (if needed) and run the C++ classifier against a generated dataset.
 #
-# Usage: classify_cpp.sh <name> [classifier]
+# Usage: classify_cpp.sh <name> [classifier] [extra main.cpp args, e.g. -o results.csv]
 #
 #   name        subfolder under data/ to classify (as produced by generate.sh).
 #                Reads data/<name>/ruleset.txt and data/<name>/trace.txt.
@@ -10,10 +10,17 @@
 #                first-match-in-priority-order) is registered -- KsetSearch
 #                and TSearch only implement partition()/build-phase so far.
 #                See the top-level README's "Adding your own classifier".
+#                Only consumed if it's a bare word right after <name>; anything
+#                starting with "-" is treated as an extra main.cpp arg.
 set -euo pipefail
 
-NAME=${1:?"usage: classify_cpp.sh <name> [classifier]"}
-CLASSIFIER=${2:-linear}
+NAME=${1:?"usage: classify_cpp.sh <name> [classifier] [extra args]"}
+shift
+CLASSIFIER=linear
+if [ $# -gt 0 ] && [[ "$1" != -* ]]; then
+  CLASSIFIER=$1
+  shift
+fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NPC_DIR="$ROOT/network-packet-classification"
@@ -35,4 +42,4 @@ mkdir -p "$BUILD_DIR"
 [ -f "$BUILD_DIR/Makefile" ] || (cd "$BUILD_DIR" && cmake ../../ >/dev/null)
 (cd "$BUILD_DIR" && make --quiet)
 
-"$BUILD_DIR/m" -r "$DATA_DIR/ruleset.txt" -p "$DATA_DIR/trace.txt" -c "$CLASSIFIER"
+"$BUILD_DIR/m" -r "$DATA_DIR/ruleset.txt" -p "$DATA_DIR/trace.txt" -c "$CLASSIFIER" "$@"

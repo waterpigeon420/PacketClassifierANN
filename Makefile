@@ -7,6 +7,7 @@
 #   make generate PROFILE=acl1 COUNT=1000             # -> data/acl1_1000/{ruleset.txt,trace.txt}
 #   make classify-cpp NAME=acl1_1000                  # build + run the C++ LinearSearch classifier
 #   make classify-py NAME=acl1_1000                   # run the Python pipeline (numpy engine)
+#   make compare NAME=acl1_1000                       # classify with both + diff their per-packet results
 #   make test NAME=acl1_1000                          # generate + classify with both, one shot
 #   make shell                                        # drop into the container
 
@@ -18,7 +19,7 @@ NAME ?= $(PROFILE)_$(COUNT)
 ENGINE ?= numpy
 CLASSIFIER ?= linear
 
-.PHONY: build generate classify-cpp classify-py test shell clean
+.PHONY: build generate classify-cpp classify-py compare test shell clean
 
 build:
 	docker compose build
@@ -31,6 +32,11 @@ classify-cpp:
 
 classify-py:
 	$(RUN) scripts/classify_py.sh $(NAME) $(ENGINE)
+
+compare:
+	$(RUN) scripts/classify_cpp.sh $(NAME) $(CLASSIFIER) -o data/$(NAME)/cpp_results.csv
+	$(RUN) scripts/classify_py.sh $(NAME) $(ENGINE) --out data/$(NAME)/py_results.csv
+	$(RUN) python3 pipeline/compare_results.py data/$(NAME)/cpp_results.csv data/$(NAME)/py_results.csv
 
 test: generate classify-cpp classify-py
 
